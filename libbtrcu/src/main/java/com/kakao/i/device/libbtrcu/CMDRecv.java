@@ -2,15 +2,12 @@ package com.kakao.i.device.libbtrcu;
 
 import android.util.Log;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-public class CMDRecv implements Runnable{
+public class CMDRecv implements Runnable {
     final static String TAG = "BTRCU_JNI";
 
     public static final int CMD_RPORT = 55556;
@@ -29,7 +26,7 @@ public class CMDRecv implements Runnable{
             Log.d(TAG, "CMD SocketException.");
             e1.printStackTrace();
         }
-        while(true) {
+        while (true) {
             cmdPacket = new DatagramPacket(buf, buf.length);
             try {
                 cmdSocket.receive(cmdPacket);
@@ -38,7 +35,7 @@ public class CMDRecv implements Runnable{
                 e1.printStackTrace();
             }
             recvLength = cmdPacket.getLength();
-            if(recvLength > 0)
+            if (recvLength > 0)
                 Log.d(TAG, "CMD recv: " + cmdPacket.toString());
         }
     }

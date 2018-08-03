@@ -1,11 +1,15 @@
-package com.kakao.i.device.libbtrcu;
+package com.kakao.i.device.libbtrcu.sample;
 
 import android.Manifest;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import com.kakao.i.device.libbtrcu.CMDRecv;
+import com.kakao.i.device.libbtrcu.NativeHIDRaw;
+import com.kakao.i.device.libbtrcu.PcmDataRecv;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -18,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        requestPermissions(new String[] {
+        requestPermissions(new String[]{
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
         }, 12345678);

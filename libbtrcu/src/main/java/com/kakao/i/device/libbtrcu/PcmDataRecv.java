@@ -1,6 +1,7 @@
 package com.kakao.i.device.libbtrcu;
 
 import android.util.Log;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class PcmDataRecv implements Runnable {
             e.printStackTrace();
         }
 
-        while(true) {
+        while (true) {
             dataPacket = new DatagramPacket(buf, buf.length);
             try {
                 dataSocket.receive(dataPacket);
