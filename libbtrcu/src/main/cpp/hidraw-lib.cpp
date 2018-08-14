@@ -18,7 +18,7 @@
 #ifdef  GDEBUG
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 //#define gprintf(msg...)  do { fprintf(stderr,"%s %s() %d: ", __FILE__, __FUNCTION__, __LINE__); fprintf (stderr,msg);} while (0)
-#define gprintf(fmt,...)  do { LOGE("%s:%d, %s(): " fmt, __FILENAME__, __LINE__, __FUNCTION__, ##__VA_ARGS__);} while (0)
+#define gprintf(fmt,...)  do { LOGD("%s:%d, %s(): " fmt, __FILENAME__, __LINE__, __FUNCTION__, ##__VA_ARGS__);} while (0)
 #else
 #define gprintf(fmt,...) do {;} while (0)
 #endif
@@ -77,12 +77,11 @@ jint NrecStart(JNIEnv *env, jobject obj) {
     gprintf("NrecStart");
     int fd_hidraw = 0;
     int res = 0;
-    if (check_devices_state()>0)
-        fd_hidraw = open(devname, O_RDWR);
-    else
-        fd_hidraw = open(HIDRAW_DEV, O_RDWR);
+    fd_hidraw = open(HIDRAW_DEV, O_RDWR);
+    if(fd_hidraw < 0){
+        gprintf("Can not open %s.\n", HIDRAW_DEV);
+    }
 
-    gprintf("fd_hidraw : %d", fd_hidraw);
     res = write(fd_hidraw, start_rec_command, 2);
     gprintf("send_message fd:%d, res=%d\n",fd_hidraw, res);
     close(fd_hidraw);

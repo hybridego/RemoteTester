@@ -17,6 +17,7 @@ public class PcmDataRecv implements Runnable {
     private DatagramSocket dataSocket;
     private DatagramPacket dataPacket;
 
+    public static final Boolean DUMP_TEST = false;
     OutputStream pcmOutForTest = null;
 
     @Override
@@ -26,14 +27,19 @@ public class PcmDataRecv implements Runnable {
         int recvLength = 0;
         Log.d(TAG, "START!!!.");
         try {
-            pcmOutForTest = new FileOutputStream("/sdcard/savedPCM");
             dataSocket = new DatagramSocket(DATA_RPORT);
         } catch (SocketException e1) {
             Log.d(TAG, "SocketException.");
             e1.printStackTrace();
-        } catch (FileNotFoundException e) {
-            Log.d(TAG, "FileNotFoundException.");
-            e.printStackTrace();
+        }
+
+        if(DUMP_TEST) {
+            try {
+                pcmOutForTest = new FileOutputStream("/sdcard/savedPCM");
+            } catch (FileNotFoundException e) {
+                Log.d(TAG, "FileNotFoundException.");
+                e.printStackTrace();
+            }
         }
 
         while (true) {
@@ -53,11 +59,14 @@ public class PcmDataRecv implements Runnable {
                     count = 0;
                 }
             }
-            try {
-                pcmOutForTest.write(dataPacket.getData(), 0, dataPacket.getLength());
-            } catch (IOException e) {
-                Log.d(TAG, "IOException 2.");
-                e.printStackTrace();
+
+            if(DUMP_TEST) {
+                try {
+                    pcmOutForTest.write(dataPacket.getData(), 0, dataPacket.getLength());
+                } catch (IOException e) {
+                    Log.d(TAG, "IOException 2.");
+                    e.printStackTrace();
+                }
             }
         }
     }

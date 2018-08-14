@@ -4,6 +4,7 @@ import android.Manifest;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 
@@ -58,7 +59,25 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "" + (ret ? "Remote Controller is connected." : "Remote Controller is NOT connected."));
             }
         });
+    }
 
+    public boolean onKeyDown(int keycode, KeyEvent event)
+    {
+        Log.d(TAG, "keycode: "+keycode);
+        switch(keycode)
+        {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                Log.d(TAG, "KEYCODE_VOLUME_DOWN ");
+                break;
 
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                Log.d(TAG, "KEYCODE_VOLUME_UP ");
+                break;
+
+            case KeyEvent.KEYCODE_MEDIA_RECORD:
+                Log.d(TAG, "KEYCODE_MEDIA_RECORD ");
+                break;
+        }
+        return true;
     }
 }
