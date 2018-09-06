@@ -1,0 +1,227 @@
+package com.kakao.i.device.libbtrcu.sample;
+
+import android.Manifest;
+import android.app.ActivityManager;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
+import android.content.Context;
+import android.os.Build;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.widget.Button;
+
+import com.kakao.i.device.libbtrcu.CMDRecv;
+import com.kakao.i.device.libbtrcu.NativeHIDRaw;
+import com.kakao.i.device.libbtrcu.PcmDataRecv;
+
+public class MainActivity extends AppCompatActivity {
+
+    final static String TAG = "BTRCU_JNI";
+    private Thread thr_PcmDataRecv;
+    private Thread thr_CMDRecv;
+
+    private boolean isConnected = true;
+
+    private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private String mBluetoothDeviceAddress;
+    private BluetoothGatt mBluetoothGatt;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        initialize();
+
+        long a = 0;
+        int b = 0;
+
+        Runtime rt = Runtime.getRuntime();
+        a= rt.maxMemory();
+
+        ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        b = am.getMemoryClass();
+        Log.d(TAG,"a:"+a/1024/1024+" b:"+b);
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+            requestPermissions(new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, 12345678);
+        }
+
+        thr_PcmDataRecv = new Thread(new PcmDataRecv());
+        thr_PcmDataRecv.start();
+
+        thr_CMDRecv = new Thread(new CMDRecv());
+        thr_CMDRecv.start();
+
+        Button btn_recStart = (Button) findViewById(R.id.btn_start);
+        btn_recStart.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "btn_recStart ");
+                NativeHIDRaw.getInstance().recStart();
+            }
+        });
+
+        Button btn_recStop = (Button) findViewById(R.id.btn_stop);
+        btn_recStop.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "btn_recStop ");
+                NativeHIDRaw.getInstance().recStop();
+            }
+        });
+
+        Button btn_isConnected = (Button) findViewById(R.id.btn_check);
+        btn_isConnected.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "btn_isConnected ");
+                boolean ret = false;
+                ret = NativeHIDRaw.getInstance().isConnected();
+                Log.d(TAG, "" + (ret ? "Remote Controller is connected." : "Remote Controller is NOT connected."));
+            }
+        });
+
+        Button btn_rstartD = (Button) findViewById(R.id.btn_rstartD);
+        btn_rstartD.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                Log.d(TAG, "btn_rstartD ");
+//                NativeHIDRaw.getInstance().restartD();
+
+                final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("D2:08:24:F8:00:10");
+                if (device == null) {
+                    Log.w(TAG, "Device not found.  Unable to connect.");
+                }
+                // We want to directly connect to the device, so we are setting the autoConnect
+                // parameter to false.
+                mBluetoothGatt = device.connectGatt(getApplicationContext(), false, mGattCallback);
+            }
+        });
+    }
+
+    public boolean initialize() {
+        // For API level 18 and above, get a reference to BluetoothAdapter through
+        // BluetoothManager.
+        if (mBluetoothManager == null) {
+            mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            if (mBluetoothManager == null) {
+                Log.e(TAG, "Unable to initialize BluetoothManager.");
+                return false;
+            }
+        }
+
+        mBluetoothAdapter = mBluetoothManager.getAdapter();
+        if (mBluetoothAdapter == null) {
+            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
+            return false;
+        }
+
+
+
+        return true;
+    }
+
+    // Implements callback methods for GATT events that the app cares about.  For example,
+    // connection change and services discovered.
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            String intentAction;
+
+            Log.w(TAG, " 1 onConnectionStateChange received: " + status +":"+newState);
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                mBluetoothGatt.discoverServices();
+                isConnected = true;
+                Log.w(TAG, " 2 onConnectionStateChange received: " + status);
+
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                isConnected = false;
+                Log.w(TAG, " 3 onConnectionStateChange received: " + status);
+
+
+                final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice("D2:08:24:F8:00:10");
+                if (device == null) {
+                    Log.w(TAG, "Device not found.  Unable to connect.");
+                }
+                // We want to directly connect to the device, so we are setting the autoConnect
+                // parameter to false.
+                mBluetoothGatt = device.connectGatt(getApplicationContext(), false, mGattCallback);
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            Log.w(TAG, "1 onServicesDiscovered received: " + status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+
+                Log.w(TAG, "2 onServicesDiscovered received: " + status);
+            } else {
+                Log.w(TAG, "3 onServicesDiscovered received: " + status);
+            }
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
+                                         int status) {
+            Log.w(TAG, "1 onCharacteristicRead" + status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.w(TAG, "2 onCharacteristicRead" + status);
+            }
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
+            Log.w(TAG, "onCharacteristicChanged");
+        }
+    };
+
+    public boolean onKeyDown(int keycode, KeyEvent event)
+    {
+        Log.d(TAG, "keycode: "+keycode);
+        switch(keycode)
+        {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                Log.d(TAG, "KEYCODE_VOLUME_DOWN ");
+                break;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                Log.d(TAG, "KEYCODE_VOLUME_UP ");
+                break;
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+                Log.d(TAG, "KEYCODE_MEDIA_NEXT ");
+                break;
+            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                Log.d(TAG, "KEYCODE_MEDIA_PLAY_PAUSE ");
+                break;
+            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                Log.d(TAG, "KEYCODE_MEDIA_PREVIOUS ");
+                break;
+            case KeyEvent.KEYCODE_MEDIA_RECORD:
+                Log.d(TAG, "KEYCODE_MEDIA_RECORD ");
+                if (!isConnected) {
+                    Log.d(TAG, "PREVENT KEYCODE_MEDIA_RECORD ");
+                    break;
+                }
+                NativeHIDRaw.getInstance().recStart();
+                Log.d(TAG, "Rec start !!!!! ");
+                break;
+            case KeyEvent.KEYCODE_MEDIA_TOP_MENU:
+                Log.d(TAG, "KEYCODE_MEDIA_TOP_MENU ");
+                break;
+            case KeyEvent.KEYCODE_HEADSETHOOK:
+                Log.d(TAG, "KEYCODE_HEADSETHOOK ");
+                break;
+        }
+        return true;
+    }
+}
