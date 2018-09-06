@@ -17,8 +17,12 @@ public class PcmDataRecv implements Runnable {
     private DatagramSocket dataSocket;
     private DatagramPacket dataPacket;
 
-    public static final Boolean DUMP_TEST = false;
+    public static final Boolean DUMP_TEST = true;
     OutputStream pcmOutForTest = null;
+
+
+
+
 
     @Override
     public void run() {
@@ -62,7 +66,10 @@ public class PcmDataRecv implements Runnable {
 
             if(DUMP_TEST) {
                 try {
-                    pcmOutForTest.write(dataPacket.getData(), 0, dataPacket.getLength());
+                    if(dataPacket != null)
+                        pcmOutForTest.write(dataPacket.getData(), 0, dataPacket.getLength());
+                    else
+                        Log.d(TAG, "dataPacket null ! ! !");
                 } catch (IOException e) {
                     Log.d(TAG, "IOException 2.");
                     e.printStackTrace();

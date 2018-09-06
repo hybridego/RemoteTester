@@ -23,4 +23,6 @@ public class NativeHIDRaw {
 
     public native int recStop();
 
+    public native int restartD();
+
 }

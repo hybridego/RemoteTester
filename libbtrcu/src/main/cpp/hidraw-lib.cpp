@@ -45,62 +45,45 @@ jboolean NisConnected(JNIEnv *env, jobject obj) {
     strcpy(devname, "/dev/");
     filename = devname + strlen(devname);
     while ((de = readdir(dir))) {
-        if (de->d_name[0] == '.' &&
-            (de->d_name[1] == '\0' ||
-             (de->d_name[1] == '.' && de->d_name[2] == '\0')))
-            continue;
-        if (memcmp(de->d_name, "hidraw", strlen("hidraw")))
-            continue;
-        strcpy(filename, de->d_name);
-        gprintf("scan_dir: %s\n", devname);
-        check_fd = open(devname, O_RDWR);
-    }
-    if (check_fd != 0) {
-        ret = true;
-        close(check_fd);
+	    if (de->d_name[0] == '.' && (de->d_name[1] == '\0' ||
+					 (de->d_name[1] == '.' && de->d_name[2] == '\0')))
+		    continue;
+	    if (memcmp(de->d_name, "hidraw", strlen("hidraw")))
+		    continue;
+	    strncpy(filename, de->d_name, strlen(de->d_name));
+	    gprintf("scan_dir: %s\n", devname);
+	    check_fd = open(devname, O_RDWR);
+	    if (check_fd != 0) {
+		    ret = true;
+		    close(check_fd);
+	    }
+	    check_fd = 0;
     }
     closedir(dir);
     return ret;
 }
 
-int check_devices_state() {
-    if (strstr(devname, "hidraw") != NULL) {
-        gprintf("There is hidraw devices.");
-        return 1;
-    } else {
-        gprintf("There is NOT hidraw devices.");
-        return -1;
-    }
-}
-
 jint NrecStart(JNIEnv *env, jobject obj) {
-    gprintf("NrecStart");
     int fd_hidraw = 0;
     int res = 0;
     fd_hidraw = open(HIDRAW_DEV, O_RDWR);
-    if(fd_hidraw < 0){
-        gprintf("Can not open %s.\n", HIDRAW_DEV);
+    if(fd_hidraw > 0){
+	    res = write(fd_hidraw, start_rec_command, 2);
+	    close(fd_hidraw);
     }
-
-    res = write(fd_hidraw, start_rec_command, 2);
-    gprintf("send_message fd:%d, res=%d\n",fd_hidraw, res);
-    close(fd_hidraw);
+    gprintf("NrecStart send_message fd:%d, res=%d\n",fd_hidraw, res);
     return 0;
 }
 
 jint NrecStop(JNIEnv *env, jobject obj) {
-    gprintf("NrecStop");
     int fd_hidraw = 0;
     int res = 0;
-    if (check_devices_state()>0)
-        fd_hidraw = open(devname, O_RDWR);
-    else
-        fd_hidraw = open(HIDRAW_DEV, O_RDWR);
-
-    gprintf("fd_hidraw : %d", fd_hidraw);
-    res = write(fd_hidraw, stop_rec_command, 2);
-    gprintf("send_message fd:%d, res=%d\n",fd_hidraw, res);
-    close(fd_hidraw);
+    fd_hidraw = open(HIDRAW_DEV, O_RDWR);
+    if(fd_hidraw > 0){
+	    res = write(fd_hidraw, stop_rec_command, 2);
+	    close(fd_hidraw);
+    }
+    gprintf("NrecStop send_message fd:%d, res=%d\n",fd_hidraw, res);
     return 0;
 }
 
